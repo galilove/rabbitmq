@@ -2,8 +2,7 @@ package com.gali.rabbitmq.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
@@ -17,8 +16,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 /**
- * Created by steadyjack on 2018/8/20.
- */
+ * @Author lijiali
+ * @Description //rabbitmq配置
+ * @Date 下午 9:09 2021/2/8 0008
+ **/
 @Configuration
 public class RabbitmqConfig {
 
@@ -58,6 +59,7 @@ public class RabbitmqConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factoryConfigurer.configure(factory,connectionFactory);
         factory.setMessageConverter(new Jackson2JsonMessageConverter());
+        //设置应答为none
         factory.setAcknowledgeMode(AcknowledgeMode.NONE);
         factory.setConcurrentConsumers(env.getProperty("spring.rabbitmq.listener.concurrency",int.class));
         factory.setMaxConcurrentConsumers(env.getProperty("spring.rabbitmq.listener.max-concurrency",int.class));
@@ -86,6 +88,18 @@ public class RabbitmqConfig {
         return rabbitTemplate;
     }
 
-
+    //构建消息模型
+    @Bean
+    public DirectExchange directExchange(){
+        return new DirectExchange(env.getProperty("basic.info.mq.exchange.name"),true,true);
+    }
+    @Bean
+    public Queue queue(){
+        return new Queue(env.getProperty("basic.info.mq.queue.name"),true);
+    }
+    @Bean
+    public Binding binding(){
+        return BindingBuilder.bind(queue()).to(directExchange()).with(env.getProperty("basic.info.mq.routing.key.name"));
+    }
 
 }
